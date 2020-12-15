@@ -23,7 +23,7 @@ public class GenTest {
         File pom = new File( projectCopy, "pom.xml");
         Assert.assertNotNull( pom );
         Assert.assertTrue( pom.exists());
-        Mojo mojo = rule.lookupMojo("gen", pom);
+        Mojo mojo = rule.configureMojo(new GenMojo(), "jpuppeteer-generator", pom);
         Assert.assertNotNull( mojo );
         mojo.execute();
     }
