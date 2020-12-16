@@ -35,7 +35,7 @@
                     <browserProtocol>D:\workspace\jpuppeteer-generator\src\test\projects\gen\browser_protocol.json</browserProtocol>
                     <jsProtocol>D:\workspace\jpuppeteer-generator\src\test\projects\gen\js_protocol.json</jsProtocol>
                     <connectionClassName>jpuppeteer.cdp.CDPConnection</connectionClassName>
-                    <sessionClassName>jpuppeteer.cdp.CDPConnection</sessionClassName>
+                    <sessionClassName>jpuppeteer.cdp.CDPSession</sessionClassName>
                 </configuration>
             </plugin>
         </plugins>

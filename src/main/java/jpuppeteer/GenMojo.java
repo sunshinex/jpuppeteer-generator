@@ -16,6 +16,8 @@ import java.util.*;
 @Mojo(name = "gen")
 public class GenMojo extends AbstractMojo {
 
+    private static final String ENUM_CLASS = "CDPEnum";
+
     private static final String CRLF = "\r\n";
 
     @Parameter
@@ -48,6 +50,8 @@ public class GenMojo extends AbstractMojo {
             if (!browserDoc.version.equals(jsDoc.version)) {
                 throw new MojoFailureException("browser and js protocol not match");
             }
+            //生成枚举接口
+            createEnumInterface();
             browserDoc.domains.addAll(jsDoc.domains);
             getLog().info("protocol version " + browserDoc.version.major + "." + browserDoc.version.minor);
             //处理types的引用
@@ -100,6 +104,33 @@ public class GenMojo extends AbstractMojo {
         os.write(sb.toString().getBytes("UTF-8"));
         os.flush();
         os.close();
+    }
+
+    private void createEnumInterface() throws Exception {
+        String pkg = this.pkg;
+        String dirName = baseDir + "/" + pkg.replace(".", "/");
+        File dir = new File(dirName);
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        StringBuffer sb = new StringBuffer();
+        sb.append("package ");
+        sb.append(pkg);
+        sb.append(";");
+        sb.append(CRLF);
+        sb.append(CRLF);
+
+        sb.append("public interface ");
+        sb.append(ENUM_CLASS);
+        sb.append(" {");
+        sb.append(CRLF);
+        sb.append(CRLF);
+        sb.append("    String value();");
+        sb.append(CRLF);
+        sb.append(CRLF);
+        sb.append("}");
+
+        writeFile(dirName + "/" + ENUM_CLASS + ".java", sb);
     }
 
     public void createEventEnum(Map<String, Type> values) throws Exception {
@@ -184,25 +215,6 @@ public class GenMojo extends AbstractMojo {
         sb.append("    public Class getClazz() {");
         sb.append(CRLF);
         sb.append("        return clazz;");
-        sb.append(CRLF);
-        sb.append("    }");
-        sb.append(CRLF);
-        sb.append(CRLF);
-        sb.append("    public <T> T getObject(Object object) {");
-        sb.append(CRLF);
-        sb.append("        if (clazz == null) {");
-        sb.append(CRLF);
-        sb.append("            return null;");
-        sb.append(CRLF);
-        sb.append("        } else if (!clazz.equals(object.getClass())) {");
-        sb.append(CRLF);
-        sb.append("            throw new RuntimeException(\"can not cast \" + object.getClass() + \" to \" + clazz);");
-        sb.append(CRLF);
-        sb.append("        } else {");
-        sb.append(CRLF);
-        sb.append("            return (T) object;");
-        sb.append(CRLF);
-        sb.append("        }");
         sb.append(CRLF);
         sb.append("    }");
         sb.append(CRLF);
@@ -479,10 +491,14 @@ public class GenMojo extends AbstractMojo {
         writeFile(dirName + "/" + type.id + ".java", sb);
     }
 
-    public static StringBuffer createEnum(Domain domain, Type type) {
+    public StringBuffer createEnum(Domain domain, Type type) {
         StringBuffer sb = new StringBuffer();
         sb.append("public enum ");
         sb.append(type.id);
+        sb.append(" implements ");
+        sb.append(this.pkg);
+        sb.append(".");
+        sb.append(ENUM_CLASS);
         sb.append(" {");
         sb.append(CRLF);
         sb.append(CRLF);
@@ -511,11 +527,13 @@ public class GenMojo extends AbstractMojo {
         sb.append("    }");
         sb.append(CRLF);
         sb.append(CRLF);
-        sb.append("    public String getValue() {");
+        sb.append("    @Override");
+        sb.append(CRLF);
+        sb.append("    public String value() {");
         sb.append(CRLF);
         sb.append("        return value;");
         sb.append(CRLF);
-        sb.append("}");
+        sb.append("    }");
         sb.append(CRLF);
         sb.append(CRLF);
         sb.append("    public static ");
@@ -569,19 +587,25 @@ public class GenMojo extends AbstractMojo {
                 return typeName;
             case STRING:
                 //此处存在枚举的情况
-                if (isNotEmpty(prop.enums) && StringUtils.isEmpty(prop.id)) {
-                    //枚举
-                    if (StringUtils.isEmpty(parent.id)) {
-                        throw new Exception("parent id is null");
+                if (isNotEmpty(prop.enums)) {
+                    if (StringUtils.isEmpty(prop.id)) {
+                        //枚举
+                        if (StringUtils.isEmpty(parent.id)) {
+                            throw new Exception("parent id is null");
+                        }
+                        Type type = new Type();
+                        type.id = StringUtils.capitalize(parent.id) + StringUtils.capitalize(prop.name);
+                        type.type = TypeType.STRING;
+                        type.enums = prop.enums;
+                        type.domain = domain;
+                        createType(domain, type);
+                        return type.getPackage() + "." + type.id;
+                    } else {
+                        return prop.getPackage() + "." + prop.id;
                     }
-                    Type type = new Type();
-                    type.id = StringUtils.capitalize(parent.id) + StringUtils.capitalize(prop.name);
-                    type.type = TypeType.STRING;
-                    type.enums = prop.enums;
-                    type.domain = domain;
-                    createType(domain, type);
+                } else {
+                    return "String";
                 }
-                return "String";
             case ANY:
                 return "Object";
             case NUMBER:
