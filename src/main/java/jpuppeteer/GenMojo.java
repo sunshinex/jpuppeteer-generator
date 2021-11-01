@@ -30,9 +30,6 @@ public class GenMojo extends AbstractMojo {
     private String connectionClassName;
 
     @Parameter
-    private String sessionClassName;
-
-    @Parameter
     private File browserProtocol;
 
     @Parameter
@@ -271,11 +268,6 @@ public class GenMojo extends AbstractMojo {
             dir.mkdirs();
         }
         StringBuffer sb = new StringBuffer();
-        //需要判断哪些是session的 哪些是不需要session的
-        Set<String> withoutSessionDomain = new HashSet<>();
-        withoutSessionDomain.add("Browser");
-        withoutSessionDomain.add("Target");
-        withoutSessionDomain.add("Storage");
 
         sb.append("package ");
         sb.append(pkg);
@@ -302,41 +294,22 @@ public class GenMojo extends AbstractMojo {
         //属性及构造方法
 
         String varName;
-        if (withoutSessionDomain.contains(domain.domain)) {
-            sb.append("    private ");
-            sb.append(connectionClassName);
-            sb.append(" connection;");
-            sb.append(CRLF);
-            sb.append(CRLF);
-            sb.append("    public ");
-            sb.append(domain.domain);
-            sb.append("(");
-            sb.append(connectionClassName);
-            sb.append(" connection");
-            sb.append(") {");
-            sb.append(CRLF);
-            sb.append("        this.connection = connection;");
-            sb.append(CRLF);
-            sb.append("    }");
-            varName = "connection";
-        } else {
-            sb.append("    private ");
-            sb.append(sessionClassName);
-            sb.append(" session;");
-            sb.append(CRLF);
-            sb.append(CRLF);
-            sb.append("    public ");
-            sb.append(domain.domain);
-            sb.append("(");
-            sb.append(sessionClassName);
-            sb.append(" session");
-            sb.append(") {");
-            sb.append(CRLF);
-            sb.append("        this.session = session;");
-            sb.append(CRLF);
-            sb.append("    }");
-            varName = "session";
-        }
+        sb.append("    private ");
+        sb.append(connectionClassName);
+        sb.append(" connection;");
+        sb.append(CRLF);
+        sb.append(CRLF);
+        sb.append("    public ");
+        sb.append(domain.domain);
+        sb.append("(");
+        sb.append(connectionClassName);
+        sb.append(" connection");
+        sb.append(") {");
+        sb.append(CRLF);
+        sb.append("        this.connection = connection;");
+        sb.append(CRLF);
+        sb.append("    }");
+        varName = "connection";
         //接口方法
         for(Command command : domain.commands) {
             sb.append(CRLF);
