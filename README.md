@@ -13,7 +13,6 @@
     <browserProtocol>${project.basedir}/src/main/resources/browser_protocol.json</browserProtocol>
     <jsProtocol>${project.basedir}/src/main/resources/js_protocol.json</jsProtocol>
     <connectionClassName>jpuppeteer.cdp.CDPConnection</connectionClassName>
-    <sessionClassName>jpuppeteer.cdp.CDPSession</sessionClassName>
   </configuration>
 </plugin>
 ```
@@ -25,4 +24,3 @@
 | browserProtocol | browser protocol json文件存放地址 | 无 |
 | jsProtocol | js protocol json文件存放地址 | 无 |
 | connectionClassName | CDPConnection类名 | jpuppeteer.cdp.CDPConnection |
-| sessionClassName | CDPSession类名 | jpuppeteer.cdp.CDPSession |
