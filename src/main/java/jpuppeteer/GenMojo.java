@@ -11,6 +11,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
 import java.io.*;
+import java.security.cert.CRL;
 import java.util.*;
 
 @Mojo(name = "gen")
@@ -28,6 +29,9 @@ public class GenMojo extends AbstractMojo {
 
     @Parameter
     private String connectionClassName;
+
+    @Parameter
+    private String futureClassName;
 
     @Parameter
     private File browserProtocol;
@@ -335,7 +339,8 @@ public class GenMojo extends AbstractMojo {
             Type ret = null;
             Type param = null;
             if (isEmpty(command.returns)) {
-                sb.append("io.netty.util.concurrent.Future");
+                sb.append(futureClassName);
+                sb.append("<?>");
             } else {
                 //生成返回值结构体
                 ret = new Type();
@@ -344,7 +349,8 @@ public class GenMojo extends AbstractMojo {
                 ret.type = TypeType.OBJECT;
                 ret.domain = domain;
                 createType(domain, ret);
-                sb.append("io.netty.util.concurrent.Future<");
+                sb.append(futureClassName);
+                sb.append("<");
                 sb.append(ret.getPackage() + "." + ret.id);
                 sb.append(">");
             }
@@ -509,6 +515,15 @@ public class GenMojo extends AbstractMojo {
         sb.append("    }");
         sb.append(CRLF);
         sb.append(CRLF);
+        sb.append("    @Override");
+        sb.append(CRLF);
+        sb.append("    public String toString() {");
+        sb.append(CRLF);
+        sb.append("        return value;");
+        sb.append(CRLF);
+        sb.append("    }");
+        sb.append(CRLF);
+        sb.append(CRLF);
         sb.append("    public static ");
         sb.append(type.id);
         sb.append(" findByValue(String value) {");
@@ -612,11 +627,47 @@ public class GenMojo extends AbstractMojo {
             sb.append(CRLF);
             sb.append("    */");
             sb.append(CRLF);
-            sb.append("    public final ");
+            sb.append("    private ");
             sb.append(typeName);
             sb.append(" ");
             sb.append(prop.name.equals("this") ? "self" : prop.name);
             sb.append(";");
+            sb.append(CRLF);
+            sb.append(CRLF);
+        }
+        //生成setter, getter
+        for(Type prop : type.properties) {
+            String typeName = getType(domain, prop, type);
+            String propName = prop.name.equals("this") ? "self" : prop.name;
+            sb.append("    public void set");
+            sb.append(StringUtils.capitalize(propName));
+            sb.append(" (");
+            sb.append(typeName);
+            sb.append(" ");
+            sb.append(propName);
+            sb.append(") {");
+            sb.append(CRLF);
+            sb.append("        this.");
+            sb.append(propName);
+            sb.append(" = ");
+            sb.append(propName);
+            sb.append(";");
+            sb.append(CRLF);
+            sb.append("    }");
+            sb.append(CRLF);
+            sb.append(CRLF);
+
+            sb.append("    public ");
+            sb.append(typeName);
+            sb.append(" get");
+            sb.append(StringUtils.capitalize(propName));
+            sb.append("() {");
+            sb.append(CRLF);
+            sb.append("        return this.");
+            sb.append(propName);
+            sb.append(";");
+            sb.append(CRLF);
+            sb.append("    }");
             sb.append(CRLF);
             sb.append(CRLF);
         }
@@ -625,9 +676,13 @@ public class GenMojo extends AbstractMojo {
         sb.append(type.id);
         sb.append("(");
         boolean hasOptional = false;
+        int argCount = 0;
+        int optionalArgCount = 0;
         for(int i=0; i<type.properties.size(); i++) {
             Type prop = type.properties.get(i);
+            argCount++;
             if (prop.optional) {
+                optionalArgCount++;
                 hasOptional = true;
             }
             if (i > 0) {
@@ -685,6 +740,16 @@ public class GenMojo extends AbstractMojo {
                 sb.append(";");
                 sb.append(CRLF);
             }
+            sb.append("    }");
+            sb.append(CRLF);
+            sb.append(CRLF);
+        }
+        if (argCount > 0 && argCount != optionalArgCount) {
+            //生成无参constructor
+            sb.append("    public ");
+            sb.append(type.id);
+            sb.append("() {");
+            sb.append(CRLF);
             sb.append("    }");
             sb.append(CRLF);
             sb.append(CRLF);
